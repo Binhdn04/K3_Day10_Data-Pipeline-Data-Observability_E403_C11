@@ -25,7 +25,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer is identical to the reference answer, accurately capturing the main topic of the paper regarding the challenges faced by flat retrieval paradigms in the context of growing tool repositories for LLM agents."
+      "reasoning": "The model answer is identical to the reference answer, accurately capturing the main topic of the paper regarding the challenges faced by flat retrieval paradigms in the context of LLM agents."
     }
   },
   {
@@ -83,7 +83,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, indicating that it is materially correct."
+      "reasoning": "The model answer matches the reference answer exactly, providing the correct publication date."
     }
   },
   {
@@ -199,7 +199,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer is identical to the reference answer, accurately capturing the main topic of the paper."
+      "reasoning": "The model answer is identical to the reference answer, accurately capturing the main topic of the paper regarding the challenges in diagnosing jawbone lesions."
     }
   },
   {

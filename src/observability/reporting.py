@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import math
 from typing import Any
 
 from core.utils import now_utc, write_text
@@ -26,6 +27,7 @@ def generate_phase1_report(
     metrics: dict[str, Any],
     quality: dict[str, Any],
     freshness: dict[str, Any],
+    agent_demo: dict[str, Any] | None = None,
 ) -> None:
     """Tạo báo cáo Markdown cho Phase 1 (Baseline Pipeline)."""
 
@@ -42,6 +44,10 @@ def generate_phase1_report(
 
     ragas_info = metrics.get("ragas", {})
     ragas_str = "Skipped" if "skipped" in ragas_info else str(ragas_info)
+    answer_mode = metrics.get("answer_mode", "unknown")
+    demo = agent_demo or {}
+    demo_answers = demo.get("answers", [])
+    completed_demo_answers = sum(item.get("status") == "completed" for item in demo_answers)
 
     md_content = f"""# 📊 Phase 1 Baseline Data Pipeline & Observability Report
 
@@ -78,7 +84,10 @@ def generate_phase1_report(
 
 ---
 
-## 3. 🎯 Baseline RAG Evaluation Metrics
+## 3. 🎯 Baseline RAG Retrieval & Deterministic QA Metrics
+
+- **Answer Mode:** `{answer_mode}`
+- Các metrics dưới đây đánh giá retrieval và deterministic metadata QA; không được diễn giải là output trực tiếp của LLM agent.
 
 | Metric Name | Value | Description |
 | :--- | :--- | :--- |
@@ -92,9 +101,18 @@ def generate_phase1_report(
 
 ---
 
+## 4. 🤖 Tool-Using Agent Demo
+
+- **Status:** `{demo.get("status", "not-run")}`
+- **Provider / Model:** `{demo.get("provider", "N/A")} / {demo.get("model", "N/A")}`
+- **Completed Answers:** `{completed_demo_answers} / {len(demo_answers)}`
+- **Artifact:** `data/results/agent_demo_answers.json`
+
+---
+
 ## 💡 Key Summary
 The baseline data pipeline executed successfully with **{quality.get("total_rows", 0)} clean records**. 
-Data quality checks passed with **{_fmt_pct(metrics.get("retrieval_hit_rate"))} retrieval hit rate** and **{_fmt_num(metrics.get("mean_judge_score"), 2)}/5.0 mean judge score**.
+Deterministic QA evaluation đạt **{_fmt_pct(metrics.get("retrieval_hit_rate"))} retrieval hit rate** và **{_fmt_num(metrics.get("mean_judge_score"), 2)}/5.0 mean judge score**.
 """.strip() + "\n"
 
     write_text(Path(report_path), md_content)
@@ -110,7 +128,7 @@ def generate_corruption_report(
     corrupted_freshness: dict[str, Any],
     repaired_freshness: dict[str, Any],
 ) -> None:
-    """Tạo báo cáo Markdown so sánh hiệu năng Baseline vs Corrupted vs Repaired."""
+    """Tạo báo cáo Markdown so sánh retrieval/QA Baseline vs Corrupted vs Repaired."""
 
     timestamp = now_utc().strftime("%Y-%m-%d %H:%M:%S UTC")
 
@@ -145,6 +163,62 @@ def generate_corruption_report(
     corr_score = corrupted_metrics.get("mean_judge_score")
     rep_score = repaired_metrics.get("mean_judge_score")
 
+    metric_pairs = {
+        "retrieval_hit_rate": (base_hit, rep_hit),
+        "mean_token_f1": (base_f1, rep_f1),
+        "judge_accuracy": (base_acc, rep_acc),
+        "mean_judge_score": (base_score, rep_score),
+    }
+    recovered_metrics = {
+        name: (
+            baseline is not None
+            and repaired is not None
+            and math.isclose(float(baseline), float(repaired), rel_tol=1e-6, abs_tol=1e-6)
+        )
+        for name, (baseline, repaired) in metric_pairs.items()
+    }
+    metrics_fully_recovered = all(recovered_metrics.values())
+    data_fully_recovered = bool(repaired_quality.get("passed")) and bool(
+        repaired_freshness.get("is_fresh")
+    )
+
+    if base_hit is not None and corr_hit is not None and corr_hit < base_hit:
+        impact_finding = (
+            f"Retrieval hit rate giảm từ {_fmt_pct(base_hit)} xuống {_fmt_pct(corr_hit)}, "
+            "cho thấy corruption tạo tác động đo được."
+        )
+    else:
+        impact_finding = (
+            "Retrieval hit rate không giảm so với baseline; chưa đủ bằng chứng để kết luận "
+            "corruption làm retrieval kém đi."
+        )
+
+    failed_corrupted_checks = [
+        str(check.get("check", "unknown"))
+        for check in corrupted_quality.get("checks", [])
+        if not check.get("passed")
+    ]
+    observability_finding = (
+        "Quality gates bị fail: " + ", ".join(failed_corrupted_checks) + "."
+        if failed_corrupted_checks
+        else "Quality gates không phát hiện lỗi nào trong corrupted dataset."
+    )
+
+    if metrics_fully_recovered and data_fully_recovered:
+        recovery_finding = (
+            "Repaired dataset phục hồi đầy đủ data quality, freshness và toàn bộ metrics về baseline."
+        )
+    elif data_fully_recovered:
+        remaining = ", ".join(name for name, recovered in recovered_metrics.items() if not recovered)
+        recovery_finding = (
+            "Data quality và freshness đã phục hồi, nhưng các metrics chưa khớp hoàn toàn baseline: "
+            f"{remaining or 'unknown'}."
+        )
+    else:
+        recovery_finding = (
+            "Repair chưa phục hồi đầy đủ quality/freshness; cần xem artifacts trước khi kết luận recovery."
+        )
+
     md_content = f"""# ⚡ Data Corruption, Observability & Repair Impact Analysis Report
 
 **Generated Date:** {timestamp}  
@@ -153,7 +227,7 @@ def generate_corruption_report(
 ---
 
 ## Executive Summary
-Báo cáo này đối sánh chất lượng của **RAG Agent** và **Data Observability** trên 3 trạng thái dữ liệu:
+Báo cáo này đối sánh chất lượng của **RAG retrieval/deterministic QA** và **Data Observability** trên 3 trạng thái dữ liệu:
 1. **Baseline (Sạch):** Dữ liệu chuẩn ban đầu thu thập từ Crossref API.
 2. **Corrupted (Bị lỗi):** Giả lập dữ liệu lỗi (xóa record mới, rỗng summary, nhiễu text, ngày cũ, trùng lặp).
 3. **Repaired (Đã phục hồi):** Tự động khôi phục dữ liệu từ nguồn Raw Response Artifact.
@@ -181,9 +255,9 @@ Báo cáo này đối sánh chất lượng của **RAG Agent** và **Data Obser
 ---
 
 ## 🔬 3. Key Observations & Findings
-1. **Ảnh hưởng của Corruption lên Retrieval:** Dữ liệu bị nhiễu và rỗng summary làm giảm khả năng vector search tìm đúng context bài báo, trực tiếp làm sụt giảm **Retrieval Hit Rate**.
-2. **Khả năng phát hiện lỗi của Data Observability:** Các bộ kiểm tra `run_data_quality_checks` và `build_freshness_report` đã bắt đúng các lỗi rỗng summary, dữ liệu lỗi thời (stale), trùng lặp bản ghi và thiếu thông tin.
-3. **Phục hồi hoàn toàn nhờ Data Lineage:** Nhờ việc lưu trữ lại **Raw API Artifacts** (`data/raw/`), quy trình Repair đã khôi phục thành công dataset về trạng thái sạch, nâng hiệu năng RAG Agent trở lại mức Baseline ban đầu.
+1. **Ảnh hưởng của Corruption:** {impact_finding}
+2. **Khả năng phát hiện của Observability:** {observability_finding}
+3. **Mức độ phục hồi từ Raw Data Lineage:** {recovery_finding}
 """.strip() + "\n"
 
     write_text(Path(report_path), md_content)

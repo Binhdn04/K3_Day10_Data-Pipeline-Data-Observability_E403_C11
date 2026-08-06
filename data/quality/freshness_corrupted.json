@@ -1,0 +1,11 @@
+{
+  "report_path": "C:\\Users\\ADMIN\\Documents\\VinUni\\Th\u1ef1c h\u00e0nh\\K3_Day10_Data-Pipeline-Data-Observability_E403_C11\\data\\quality\\freshness_corrupted.json",
+  "timestamp": "2026-08-06T04:58:57.223410+00:00",
+  "latest_published": "2026-07-13",
+  "oldest_published": "1900-01-01",
+  "freshness_threshold_days": 180,
+  "stale_rows": 1,
+  "fresh_rows": 22,
+  "total_rows": 23,
+  "is_fresh": false
+}

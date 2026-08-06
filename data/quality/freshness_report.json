@@ -1,6 +1,6 @@
 {
-  "report_path": "F:\\AIThucChien\\Thuchanh\\K3_Day10_Data-Pipeline-Data-Observability_E403_C11\\data\\quality\\freshness_report.json",
-  "timestamp": "2026-08-06T04:16:53.074615+00:00",
+  "report_path": "C:\\Users\\ADMIN\\Documents\\VinUni\\Th\u1ef1c h\u00e0nh\\K3_Day10_Data-Pipeline-Data-Observability_E403_C11\\data\\quality\\freshness_report.json",
+  "timestamp": "2026-08-06T04:58:05.715658+00:00",
   "latest_published": "2026-08-01",
   "oldest_published": "2026-02-12",
   "freshness_threshold_days": 180,

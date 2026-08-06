@@ -119,5 +119,15 @@ def build_clean_dataframe(records: list[PaperRecord], run_date: datetime) -> pd.
 
     # DOI matching is case-insensitive; retain the most recently updated instance.
     df["_paper_id_key"] = df["paper_id"].str.casefold()
-    df = df.drop_duplicates(subset=["_paper_id_key"], keep="first").drop(columns="_paper_id_key")
+    df["_updated_sort"] = pd.to_datetime(df["updated"], utc=True, errors="coerce")
+    df = (
+        df.sort_values(
+            ["_paper_id_key", "_updated_sort"],
+            ascending=[True, False],
+            na_position="last",
+            kind="stable",
+        )
+        .drop_duplicates(subset=["_paper_id_key"], keep="first")
+        .drop(columns=["_paper_id_key", "_updated_sort"])
+    )
     return df.sort_values(["published", "paper_id"], ascending=[False, True], kind="stable").reset_index(drop=True)

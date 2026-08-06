@@ -1,6 +1,6 @@
 # 📊 Phase 1 Baseline Data Pipeline & Observability Report
 
-**Generated Date:** 2026-08-06 04:16:53 UTC  
+**Generated Date:** 2026-08-06 04:58:05 UTC  
 **Pipeline State:** Baseline (Clean Data)
 
 ---
@@ -23,11 +23,11 @@
 
 | Check Name | Status | Details |
 | :--- | :--- | :--- |
-| `row_count_check` | ✅ PASS | Total rows: 24 |
-| `paper_id_null_and_unique` | ✅ PASS | Nulls: 0, Duplicates: 0 |
-| `title_not_null_or_empty` | ✅ PASS | Nulls: 0, Empty: 0 |
-| `summary_validity` | ✅ PASS | Nulls: 0, Empty: 0, Short (<20 chars): 0 |
-| `freshness_check` | ✅ PASS | Stale rows (> 180 days): 0 / 24 |
+| `row_count_check` | ✅ PASS | Total rows: 24, Expected baseline rows: 24 |
+| `paper_id_null_and_unique` | ✅ PASS | Nulls: 0, Blanks: 0, Case-insensitive duplicates: 0 |
+| `title_not_null_or_empty` | ✅ PASS | Nulls: 0, Empty: 0, Truncation markers: 0 |
+| `summary_validity` | ✅ PASS | Nulls: 0, Empty: 0, Short (<20 chars): 0, Noise markers: 0 |
+| `freshness_check` | ✅ PASS | Stale rows (> 180 days): 0 / 24, Invalid age_days: 0 |
 
 ### ⏱️ Data Freshness Summary
 - **Fresh Status:** `IS FRESH ✅`
@@ -37,20 +37,32 @@
 
 ---
 
-## 3. 🎯 Baseline RAG Evaluation Metrics
+## 3. 🎯 Baseline RAG Retrieval & Deterministic QA Metrics
+
+- **Answer Mode:** `deterministic_metadata_qa`
+- Các metrics dưới đây đánh giá retrieval và deterministic metadata QA; không được diễn giải là output trực tiếp của LLM agent.
 
 | Metric Name | Value | Description |
 | :--- | :--- | :--- |
-| **Test Samples** | `16` | Number of test questions evaluated |
+| **Test Samples** | `12` | Number of test questions evaluated |
 | **Retrieval Hit Rate** | `100.0%` | Percentage of queries retrieving correct document |
-| **Mean Token F1** | `0.5779` | Lexical overlap between prediction and ground truth |
-| **Judge Accuracy** | `50.0%` | Percentage of answers judged correct (Score >= 3) |
-| **Mean Judge Score** | `3.31 / 5.0` | Average LLM/Heuristic Judge score |
+| **Mean Token F1** | `1.0000` | Lexical overlap between prediction and ground truth |
+| **Judge Accuracy** | `100.0%` | Percentage of answers judged correct (Score >= 3) |
+| **Mean Judge Score** | `5 / 5.0` | Average LLM/Heuristic Judge score |
 
 - **Ragas Status:** `Skipped`
 
 ---
 
+## 4. 🤖 Tool-Using Agent Demo
+
+- **Status:** `completed`
+- **Provider / Model:** `openai / gpt-4o-mini`
+- **Completed Answers:** `3 / 3`
+- **Artifact:** `data/results/agent_demo_answers.json`
+
+---
+
 ## 💡 Key Summary
 The baseline data pipeline executed successfully with **24 clean records**. 
-Data quality checks passed with **100.0% retrieval hit rate** and **3.31/5.0 mean judge score**.
+Deterministic QA evaluation đạt **100.0% retrieval hit rate** và **5/5.0 mean judge score**.

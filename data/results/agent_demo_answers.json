@@ -1,0 +1,28 @@
+{
+  "status": "completed",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "answers": [
+    {
+      "id": "summary-001",
+      "question_type": "summary",
+      "question": "What is the main topic of the paper 'Hi\u2010 <scp>RAG</scp> : A Hierarchical Retrieval\u2010Augmented Generation Framework for Scalable and Generalisable Tool Selection in Large Language Model Agents'?",
+      "status": "completed",
+      "answer": "I couldn't find a paper with the title \"Hi\u2010RAG : A Hierarchical Retrieval\u2010Augmented Generation Framework for Scalable and Generalisable Tool Selection in Large Language Model Agents\" in the indexed corpus. Therefore, I cannot provide information about its main topic."
+    },
+    {
+      "id": "authors-001",
+      "question_type": "authors",
+      "question": "Who authored the paper 'Hi\u2010 <scp>RAG</scp> : A Hierarchical Retrieval\u2010Augmented Generation Framework for Scalable and Generalisable Tool Selection in Large Language Model Agents'?",
+      "status": "completed",
+      "answer": "The paper titled \"Hi\u2010 <scp>RAG</scp> : A Hierarchical Retrieval\u2010Augmented Generation Framework for Scalable and Generalisable Tool Selection in Large Language Model Agents\" was authored by Wei Tian and Yuhao Zhou. You can find more details about the paper [here](https://doi.org/10.1111/exsy.70341)."
+    },
+    {
+      "id": "date-001",
+      "question_type": "date",
+      "question": "When was the paper 'Hi\u2010 <scp>RAG</scp> : A Hierarchical Retrieval\u2010Augmented Generation Framework for Scalable and Generalisable Tool Selection in Large Language Model Agents' published?",
+      "status": "completed",
+      "answer": "The paper titled \"Hi\u2010 <scp>RAG</scp> : A Hierarchical Retrieval\u2010Augmented Generation Framework for Scalable and Generalisable Tool Selection in Large Language Model Agents\" was published on August 1, 2026. You can find more details [here](https://doi.org/10.1111/exsy.70341)."
+    }
+  ]
+}

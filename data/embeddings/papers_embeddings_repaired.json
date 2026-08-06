@@ -3,7 +3,7 @@
   "backend": "chroma",
   "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
   "persist_path": "C:\\Users\\ADMIN\\Documents\\VinUni\\Th\u1ef1c h\u00e0nh\\K3_Day10_Data-Pipeline-Data-Observability_E403_C11\\data\\chroma",
-  "collection_name": "papers-baseline",
+  "collection_name": "papers-repaired",
   "document_count": 24,
   "documents": [
     {

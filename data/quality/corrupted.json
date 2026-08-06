@@ -1,0 +1,60 @@
+{
+  "report_name": "corrupted",
+  "timestamp": "2026-08-06T04:58:57.219704+00:00",
+  "total_rows": 23,
+  "passed": false,
+  "passed_checks_count": 0,
+  "total_checks_count": 5,
+  "checks": [
+    {
+      "check": "row_count_check",
+      "passed": false,
+      "details": "Total rows: 23, Expected baseline rows: 24",
+      "value": {
+        "actual": 23,
+        "expected": 24
+      }
+    },
+    {
+      "check": "paper_id_null_and_unique",
+      "passed": false,
+      "details": "Nulls: 0, Blanks: 0, Case-insensitive duplicates: 1",
+      "value": {
+        "nulls": 0,
+        "blanks": 0,
+        "duplicates": 1
+      }
+    },
+    {
+      "check": "title_not_null_or_empty",
+      "passed": false,
+      "details": "Nulls: 0, Empty: 0, Truncation markers: 1",
+      "value": {
+        "nulls": 0,
+        "empty": 0,
+        "truncated": 1
+      }
+    },
+    {
+      "check": "summary_validity",
+      "passed": false,
+      "details": "Nulls: 0, Empty: 1, Short (<20 chars): 1, Noise markers: 1",
+      "value": {
+        "nulls": 0,
+        "empty": 1,
+        "short": 1,
+        "noise": 1
+      }
+    },
+    {
+      "check": "freshness_check",
+      "passed": false,
+      "details": "Stale rows (> 180 days): 1 / 23, Invalid age_days: 0",
+      "value": {
+        "stale_rows": 1,
+        "invalid_age_days": 0,
+        "threshold_days": 180
+      }
+    }
+  ]
+}

@@ -131,6 +131,7 @@ def evaluate_pipeline(
         )
 
     summary = {
+        "answer_mode": "deterministic_metadata_qa",
         "samples": len(answers),
         "retrieval_hit_rate": mean(1.0 if item["retrieval_hit"] else 0.0 for item in answers),
         "mean_token_f1": mean(item["token_f1"] for item in answers),

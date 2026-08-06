@@ -9,7 +9,12 @@ from core.config import Settings
 from core.utils import now_utc, write_json
 
 
-def run_data_quality_checks(df: pd.DataFrame, settings: Settings, report_name: str) -> dict[str, Any]:
+def run_data_quality_checks(
+    df: pd.DataFrame,
+    settings: Settings,
+    report_name: str,
+    expected_row_count: int | None = None,
+) -> dict[str, Any]:
     """Tạo và chạy bộ data quality checks trên DataFrame dữ liệu.
 
     Thực hiện các kiểm tra:
@@ -24,25 +29,40 @@ def run_data_quality_checks(df: pd.DataFrame, settings: Settings, report_name: s
     total_rows = len(df)
     checks: list[dict[str, Any]] = []
 
-    # 1. Row count check
+    # 1. Row count check. Corrupted/repaired runs receive the baseline count so
+    # missing rows are observable rather than merely checking that data exists.
     has_rows = total_rows > 0
+    row_count_matches = expected_row_count is None or total_rows == expected_row_count
     checks.append({
         "check": "row_count_check",
-        "passed": has_rows,
-        "details": f"Total rows: {total_rows}",
-        "value": total_rows,
+        "passed": has_rows and row_count_matches,
+        "details": (
+            f"Total rows: {total_rows}"
+            if expected_row_count is None
+            else f"Total rows: {total_rows}, Expected baseline rows: {expected_row_count}"
+        ),
+        "value": {"actual": total_rows, "expected": expected_row_count},
     })
 
     # 2. paper_id null & uniqueness check
     if "paper_id" in df.columns and total_rows > 0:
+        paper_ids = df["paper_id"].fillna("").astype(str).str.strip()
         paper_id_nulls = int(df["paper_id"].isna().sum())
-        paper_id_duplicates = int(df["paper_id"].duplicated().sum())
-        passed_paper_id = (paper_id_nulls == 0) and (paper_id_duplicates == 0)
+        paper_id_blanks = int(paper_ids.eq("").sum())
+        paper_id_duplicates = int(paper_ids.str.casefold().duplicated().sum())
+        passed_paper_id = paper_id_nulls == 0 and paper_id_blanks == 0 and paper_id_duplicates == 0
         checks.append({
             "check": "paper_id_null_and_unique",
             "passed": passed_paper_id,
-            "details": f"Nulls: {paper_id_nulls}, Duplicates: {paper_id_duplicates}",
-            "value": {"nulls": paper_id_nulls, "duplicates": paper_id_duplicates},
+            "details": (
+                f"Nulls: {paper_id_nulls}, Blanks: {paper_id_blanks}, "
+                f"Case-insensitive duplicates: {paper_id_duplicates}"
+            ),
+            "value": {
+                "nulls": paper_id_nulls,
+                "blanks": paper_id_blanks,
+                "duplicates": paper_id_duplicates,
+            },
         })
     else:
         checks.append({
@@ -54,14 +74,23 @@ def run_data_quality_checks(df: pd.DataFrame, settings: Settings, report_name: s
 
     # 3. title null & empty check
     if "title" in df.columns and total_rows > 0:
+        titles = df["title"].fillna("").astype(str).str.strip()
         title_nulls = int(df["title"].isna().sum())
-        empty_titles = int((df["title"].astype(str).str.strip() == "").sum())
-        passed_title = (title_nulls == 0) and (empty_titles == 0)
+        empty_titles = int(titles.eq("").sum())
+        truncated_titles = int(titles.str.endswith("...").sum())
+        passed_title = title_nulls == 0 and empty_titles == 0 and truncated_titles == 0
         checks.append({
             "check": "title_not_null_or_empty",
             "passed": passed_title,
-            "details": f"Nulls: {title_nulls}, Empty: {empty_titles}",
-            "value": {"nulls": title_nulls, "empty": empty_titles},
+            "details": (
+                f"Nulls: {title_nulls}, Empty: {empty_titles}, "
+                f"Truncation markers: {truncated_titles}"
+            ),
+            "value": {
+                "nulls": title_nulls,
+                "empty": empty_titles,
+                "truncated": truncated_titles,
+            },
         })
     else:
         checks.append({
@@ -73,15 +102,32 @@ def run_data_quality_checks(df: pd.DataFrame, settings: Settings, report_name: s
 
     # 4. summary length & validity check
     if "summary" in df.columns and total_rows > 0:
+        summaries = df["summary"].fillna("").astype(str).str.strip()
         summary_nulls = int(df["summary"].isna().sum())
-        empty_summaries = int((df["summary"].astype(str).str.strip() == "").sum())
-        short_summaries = int((df["summary"].astype(str).str.strip().str.len() < 20).sum())
-        passed_summary = (summary_nulls == 0) and (empty_summaries == 0) and (short_summaries == 0)
+        empty_summaries = int(summaries.eq("").sum())
+        short_summaries = int((summaries.str.len() < 20).sum())
+        noisy_summaries = int(
+            summaries.str.contains("zxqv_noise_token|corrupted_metadata", case=False, regex=True).sum()
+        )
+        passed_summary = (
+            summary_nulls == 0
+            and empty_summaries == 0
+            and short_summaries == 0
+            and noisy_summaries == 0
+        )
         checks.append({
             "check": "summary_validity",
             "passed": passed_summary,
-            "details": f"Nulls: {summary_nulls}, Empty: {empty_summaries}, Short (<20 chars): {short_summaries}",
-            "value": {"nulls": summary_nulls, "empty": empty_summaries, "short": short_summaries},
+            "details": (
+                f"Nulls: {summary_nulls}, Empty: {empty_summaries}, "
+                f"Short (<20 chars): {short_summaries}, Noise markers: {noisy_summaries}"
+            ),
+            "value": {
+                "nulls": summary_nulls,
+                "empty": empty_summaries,
+                "short": short_summaries,
+                "noise": noisy_summaries,
+            },
         })
     else:
         checks.append({
@@ -94,13 +140,22 @@ def run_data_quality_checks(df: pd.DataFrame, settings: Settings, report_name: s
     # 5. Freshness check by age_days
     threshold = settings.freshness_threshold_days
     if "age_days" in df.columns and total_rows > 0:
-        stale_count = int((df["age_days"] > threshold).sum())
-        passed_freshness = (stale_count == 0)
+        ages = pd.to_numeric(df["age_days"], errors="coerce")
+        invalid_age_count = int(ages.isna().sum())
+        stale_count = int((ages > threshold).sum())
+        passed_freshness = stale_count == 0 and invalid_age_count == 0
         checks.append({
             "check": "freshness_check",
             "passed": passed_freshness,
-            "details": f"Stale rows (> {threshold} days): {stale_count} / {total_rows}",
-            "value": {"stale_rows": stale_count, "threshold_days": threshold},
+            "details": (
+                f"Stale rows (> {threshold} days): {stale_count} / {total_rows}, "
+                f"Invalid age_days: {invalid_age_count}"
+            ),
+            "value": {
+                "stale_rows": stale_count,
+                "invalid_age_days": invalid_age_count,
+                "threshold_days": threshold,
+            },
         })
     else:
         checks.append({

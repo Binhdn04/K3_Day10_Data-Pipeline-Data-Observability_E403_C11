@@ -10,17 +10,34 @@ from retrieval.index import LocalEmbeddingIndex
 from retrieval.llm import build_llm
 
 
+def _message_content_as_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts: list[str] = []
+        for block in content:
+            if isinstance(block, str):
+                parts.append(block)
+            elif isinstance(block, dict) and isinstance(block.get("text"), str):
+                parts.append(block["text"])
+        return "\n".join(parts)
+    return str(content) if content is not None else ""
+
+
 def build_agent(settings: Settings, index: LocalEmbeddingIndex):
     @tool
     def semantic_search_papers(query: str, top_k: int = 4) -> str:
         """Search the local paper corpus with embeddings and return the most relevant papers."""
         results = index.search(query, top_k=top_k)
+        if not results:
+            return "No relevant papers found in the indexed corpus."
         lines = []
         for result in results:
             lines.append(
                 f"paper_id: {result.paper_id}\n"
                 f"title: {result.title}\n"
                 f"score: {result.score:.4f}\n"
+                f"source_url: {result.metadata.get('abs_url', '')}\n"
                 f"{result.content}"
             )
         return "\n\n".join(lines)
@@ -34,6 +51,7 @@ def build_agent(settings: Settings, index: LocalEmbeddingIndex):
         return (
             f"paper_id: {record['paper_id']}\n"
             f"title: {record['title']}\n"
+            f"source_url: {record['metadata'].get('abs_url', '')}\n"
             f"{record['content']}"
         )
 
@@ -44,6 +62,8 @@ def build_agent(settings: Settings, index: LocalEmbeddingIndex):
         system_prompt=(
             "You answer questions about the indexed scholarly paper corpus sourced from Crossref. "
             "Use tools before answering factual questions. "
+            "Cite the supporting paper_id and title in the answer. "
+            "Do not rely on knowledge outside the tool results. "
             "If the indexed corpus does not support the answer, say so clearly."
         ),
         name="paper_corpus_agent",
@@ -56,4 +76,4 @@ def run_agent_question(agent: Any, question: str) -> str:
     if not messages:
         return ""
     final_message = messages[-1]
-    return getattr(final_message, "content", str(final_message))
+    return _message_content_as_text(getattr(final_message, "content", final_message))

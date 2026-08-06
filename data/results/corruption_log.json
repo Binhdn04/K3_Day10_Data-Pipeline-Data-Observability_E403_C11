@@ -1,0 +1,90 @@
+{
+  "version": 1,
+  "deterministic": true,
+  "input_rows": 24,
+  "output_rows": 23,
+  "corruption_counts": {
+    "drop_latest_records": 2,
+    "blank_summary": 1,
+    "inject_summary_noise": 1,
+    "truncate_title": 1,
+    "stale_published_date": 1,
+    "duplicate_record": 1
+  },
+  "events": [
+    {
+      "type": "drop_latest_records",
+      "affected_paper_ids": [
+        "10.1111/exsy.70341",
+        "10.2118/234689-pa"
+      ],
+      "parameters": {
+        "fraction": 0.1,
+        "count": 2,
+        "selection": "newest published first"
+      },
+      "before_count": 24,
+      "after_count": 22
+    },
+    {
+      "type": "blank_summary",
+      "affected_paper_ids": [
+        "10.1007/s10278-026-02086-9"
+      ],
+      "parameters": {
+        "previous_chars": 1875,
+        "replacement": ""
+      },
+      "before_count": 22,
+      "after_count": 22
+    },
+    {
+      "type": "inject_summary_noise",
+      "affected_paper_ids": [
+        "10.21203/rs.3.rs-10178277/v1"
+      ],
+      "parameters": {
+        "token": "zxqv_noise_token",
+        "repeat": 12
+      },
+      "before_count": 22,
+      "after_count": 22
+    },
+    {
+      "type": "truncate_title",
+      "affected_paper_ids": [
+        "10.2196/preprints.106157"
+      ],
+      "parameters": {
+        "original_chars": 109,
+        "retained_chars": 12
+      },
+      "before_count": 22,
+      "after_count": 22
+    },
+    {
+      "type": "stale_published_date",
+      "affected_paper_ids": [
+        "10.3390/buildings16132637"
+      ],
+      "parameters": {
+        "previous": "2026-07-02",
+        "replacement": "1900-01-01"
+      },
+      "before_count": 22,
+      "after_count": 22
+    },
+    {
+      "type": "duplicate_record",
+      "affected_paper_ids": [
+        "10.20944/preprints202602.0996.v1"
+      ],
+      "parameters": {
+        "copies_added": 1,
+        "duplicate_key": "paper_id"
+      },
+      "before_count": 22,
+      "after_count": 23
+    }
+  ]
+}

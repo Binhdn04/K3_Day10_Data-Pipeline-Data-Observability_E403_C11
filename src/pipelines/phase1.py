@@ -12,6 +12,7 @@ from ingestion.cleaning import build_clean_dataframe
 from ingestion.crossref import fetch_source_records, load_raw_records
 from observability.quality import build_freshness_report, run_data_quality_checks
 from observability.reporting import generate_phase1_report
+from retrieval.agent import build_agent, run_agent_question
 from retrieval.index import LocalEmbeddingIndex
 
 
@@ -44,6 +45,62 @@ def _configure_huggingface_auth() -> None:
         os.environ.setdefault("HF_TOKEN", hf_key)
 
 
+def _run_agent_demo(
+    settings: Settings,
+    index: LocalEmbeddingIndex,
+    test_set: list[dict],
+) -> dict:
+    """Run one question per available type and persist evidence that the tool-using agent works."""
+    selected: list[dict] = []
+    seen_types: set[str] = set()
+    for item in test_set:
+        question_type = str(item.get("question_type", "unknown"))
+        if question_type not in seen_types:
+            selected.append(item)
+            seen_types.add(question_type)
+
+    payload = {
+        "status": "completed",
+        "provider": settings.llm_provider,
+        "model": settings.model_name,
+        "answers": [],
+    }
+    try:
+        agent = build_agent(settings, index)
+    except Exception as exc:
+        payload["status"] = "unavailable"
+        payload["error"] = f"{type(exc).__name__}: {exc}"
+    else:
+        for item in selected:
+            try:
+                answer = run_agent_question(agent, item["question"])
+            except Exception as exc:
+                payload["answers"].append(
+                    {
+                        "id": item["id"],
+                        "question_type": item["question_type"],
+                        "question": item["question"],
+                        "status": "error",
+                        "error": f"{type(exc).__name__}: {exc}",
+                    }
+                )
+            else:
+                payload["answers"].append(
+                    {
+                        "id": item["id"],
+                        "question_type": item["question_type"],
+                        "question": item["question"],
+                        "status": "completed",
+                        "answer": answer,
+                    }
+                )
+        if any(item["status"] == "error" for item in payload["answers"]):
+            payload["status"] = "partial"
+
+    write_json(settings.paths.demo_answers, payload)
+    return payload
+
+
 def main() -> None:
     """Run the clean-data baseline from source ingestion through reporting."""
     settings = load_settings()
@@ -71,7 +128,13 @@ def main() -> None:
         metrics_output_path=settings.paths.baseline_metrics,
         answers_output_path=settings.paths.baseline_answers,
     )
-    quality = run_data_quality_checks(clean_df, settings, report_name="baseline")
+    agent_demo = _run_agent_demo(settings, index, test_set)
+    quality = run_data_quality_checks(
+        clean_df,
+        settings,
+        report_name="baseline",
+        expected_row_count=len(clean_df),
+    )
     freshness = build_freshness_report(
         clean_df,
         settings,
@@ -92,4 +155,5 @@ def main() -> None:
         metrics=evaluation.summary,
         quality=quality,
         freshness=freshness,
+        agent_demo=agent_demo,
     )
