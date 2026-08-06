@@ -25,7 +25,7 @@
     "judge": {
       "score": 2,
       "correct": false,
-      "reasoning": "The model answer only provides the initial context of the problem but fails to mention the proposed solution (Hi-RAG), its methodology, results, and significance, which are crucial for understanding the main topic of the paper."
+      "reasoning": "The model answer only partially captures the main topic of the paper by mentioning the issues with flat retrieval paradigms but fails to include the proposed solution (Hi-RAG) and the details about its methodology, improvements, and benchmarks that are crucial to understanding the paper's contributions."
     }
   },
   {
@@ -54,7 +54,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing the correct authors of the paper."
+      "reasoning": "The model answer correctly identifies the authors of the paper as Wei Tian and Yuhao Zhou, matching the reference answer exactly."
     }
   },
   {
@@ -110,9 +110,9 @@
     "retrieval_hit": true,
     "token_f1": 0.0,
     "judge": {
-      "score": 3,
+      "score": 2,
       "correct": false,
-      "reasoning": "The model answer does not provide specific categories that the paper belongs to, making it incomplete. However, it may imply relevance to retrieval-augmented generation and tool selection, which are related but not explicitly stated."
+      "reasoning": "The model answer does not provide any specific categories that the paper belongs to, making it incomplete and not materially correct."
     }
   },
   {
@@ -141,7 +141,7 @@
     "judge": {
       "score": 2,
       "correct": false,
-      "reasoning": "The model answer only provides a very brief summary of the topic, mentioning the use of LLMs for accident analysis and safety report generation, but it fails to capture the key elements of the SafeRAG framework, its multistage retrieval-augmented approach, and the specific methodologies and evaluations discussed in the reference answer."
+      "reasoning": "The model answer only provides a very brief introduction to the topic without addressing the specifics of the SafeRAG framework, its multistage retrieval-augmented approach, or the evaluation metrics used. It lacks the depth and detail present in the reference answer."
     }
   },
   {
@@ -286,7 +286,7 @@
     "judge": {
       "score": 5,
       "correct": true,
-      "reasoning": "The model answer matches the reference answer exactly, providing all the authors' names in the correct order."
+      "reasoning": "The model answer matches the reference answer exactly, providing all the authors' names correctly."
     }
   },
   {
@@ -344,7 +344,7 @@
     "judge": {
       "score": 1,
       "correct": false,
-      "reasoning": "The model answer is missing entirely, making it impossible to evaluate its correctness against the reference answer."
+      "reasoning": "The model answer does not provide any information or categories related to the paper, making it materially incorrect."
     }
   },
   {

@@ -1,0 +1,53 @@
+{
+  "report_name": "baseline",
+  "timestamp": "2026-08-06T04:16:53.071731+00:00",
+  "total_rows": 24,
+  "passed": true,
+  "passed_checks_count": 5,
+  "total_checks_count": 5,
+  "checks": [
+    {
+      "check": "row_count_check",
+      "passed": true,
+      "details": "Total rows: 24",
+      "value": 24
+    },
+    {
+      "check": "paper_id_null_and_unique",
+      "passed": true,
+      "details": "Nulls: 0, Duplicates: 0",
+      "value": {
+        "nulls": 0,
+        "duplicates": 0
+      }
+    },
+    {
+      "check": "title_not_null_or_empty",
+      "passed": true,
+      "details": "Nulls: 0, Empty: 0",
+      "value": {
+        "nulls": 0,
+        "empty": 0
+      }
+    },
+    {
+      "check": "summary_validity",
+      "passed": true,
+      "details": "Nulls: 0, Empty: 0, Short (<20 chars): 0",
+      "value": {
+        "nulls": 0,
+        "empty": 0,
+        "short": 0
+      }
+    },
+    {
+      "check": "freshness_check",
+      "passed": true,
+      "details": "Stale rows (> 180 days): 0 / 24",
+      "value": {
+        "stale_rows": 0,
+        "threshold_days": 180
+      }
+    }
+  ]
+}
